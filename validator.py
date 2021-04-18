@@ -72,6 +72,7 @@ def generate_makefile(stages, models, makefileName):
         mfhandle.writelines("%s\n" % line for line in makefile_contents)
 
 @app.route("/generate", methods=["POST"])
+
 def generateRelease():
 
     r = requests.get("https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v0.0.1.zip")
