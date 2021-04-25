@@ -12,11 +12,11 @@ SCHEMA_FILE='../blender-pipeline/scripts/config_schema.yaml'
 schema = yamale.make_schema(SCHEMA_FILE)
 tempdir = 'tempdir/'
 
-app = Flask(__name__)
-app.config["DEBUG"] = True
-app.config["UPLOAD_FOLDER"] = "."
+# app = Flask(__name__)
+# app.config["DEBUG"] = True
+# app.config["UPLOAD_FOLDER"] = "."
 
-@app.route("/", methods=["GET"])
+# @app.route("/", methods=["GET"])
 def home():
     return "<h1>Hi there!!!</h1>"
 
@@ -71,10 +71,20 @@ def generate_makefile(stages, models, makefileName):
     with open(makefileName, 'w+') as mfhandle:
         mfhandle.writelines("%s\n" % line for line in makefile_contents)
 
-@app.route("/generate", methods=["POST"])
 
+
+def hello_world(request):
+    request_json = request.get_json()
+    if request_json and 'name' in request_json:
+        name = request_json['name']
+    else:
+        name = 'World'
+    return 'Hello, {}!\n'.format(name)
+
+
+
+# @app.route("/generate", methods=["POST"])
 def generateRelease():
-
     r = requests.get("https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v0.0.1.zip")
     open('baap-template.zip', 'wb').write(r.content)
     
@@ -117,7 +127,7 @@ def generateRelease():
 
     return send_file('baap-template.zip')
 
-@app.route("/validate", methods=["POST"])
+# @app.route("/validate", methods=["POST"])
 def validateAgainstSchema():
     data = {}
 
@@ -145,7 +155,8 @@ def validateAgainstSchema():
     }
 
 
-app.run()
+# if __name__ == "__main__":
+    # app.run()
 
 
 
