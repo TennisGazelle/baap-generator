@@ -12,11 +12,11 @@ SCHEMA_FILE='../blender-pipeline/scripts/config_schema.yaml'
 schema = yamale.make_schema(SCHEMA_FILE)
 tempdir = 'tempdir/'
 
-# app = Flask(__name__)
-# app.config["DEBUG"] = True
-# app.config["UPLOAD_FOLDER"] = "."
+app = Flask(__name__)
+app.config["DEBUG"] = True
+app.config["UPLOAD_FOLDER"] = "."
 
-# @app.route("/", methods=["GET"])
+@app.route("/", methods=["GET"])
 def home():
     return "<h1>Hi there!!!</h1>"
 
@@ -83,7 +83,7 @@ def hello_world(request):
 
 
 
-# @app.route("/generate", methods=["POST"])
+@app.route("/generate", methods=["POST"])
 def generateRelease():
     r = requests.get("https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v0.0.1.zip")
     open('baap-template.zip', 'wb').write(r.content)
@@ -127,7 +127,7 @@ def generateRelease():
 
     return send_file('baap-template.zip')
 
-# @app.route("/validate", methods=["POST"])
+@app.route("/validate", methods=["POST"])
 def validateAgainstSchema():
     data = {}
 
@@ -155,8 +155,8 @@ def validateAgainstSchema():
     }
 
 
-# if __name__ == "__main__":
-    # app.run()
+if __name__ == "__main__":
+    app.run()
 
 
 
