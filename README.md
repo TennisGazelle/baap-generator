@@ -30,5 +30,10 @@ Returns:
 Expects: YAML file in POST payload
 Test:
 
-    curl -XPOST localhost:5000
+    curl -XPOST localhost:5000/generate
+
+Test (with file):
+    
+    curl -XPOST localhost:5000/generate -T test/config.yaml -o response.zip
+    curl -XPOST localhost:5000/generate -T test/badconfig.yaml -o response.json
 

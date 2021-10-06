@@ -1,4 +1,4 @@
-from flask import Flask, request, send_file
+from flask import request, send_file
 import yamale
 import json
 import os
@@ -27,7 +27,18 @@ class Validator:
 
     def generate_project(self):
         self.get_latest_release()
+
+        if request.files:
+            uploaded_config = request.files.getlist('payload')[0]
+            configFile = uploaded_config.filename
+            print(configFile)
+            print('todo, continue from here.......')
+            # todo continue here
+        
+        return send_file('../' + self.release_zip)
     
+
+    # should probably be static but would need a lot of params
     def get_latest_release(self):
         if not os.path.exists(tempdir) or not os.path.isdir(tempdir):
             log.info(f'creating {tempdir}...')
@@ -143,7 +154,7 @@ def generateRelease():
         print('zipping....')
         with zipfile.ZipFile('baap-template.zip', 'w') as myzip:
             myzip.write(tempdir + blender_pipeline_dir)
-            for dirname, subdirs, files in os.walk(tempdir + blender_pipeline_dir):
+            for dirname, _, files in os.walk(tempdir + blender_pipeline_dir):
                 myzip.write(dirname)
 
                 for filename in files:
@@ -152,7 +163,7 @@ def generateRelease():
             myzip.close()
 
 
-    return send_file('baap-template.zip')
+        return send_file('baap-template.zip')
 
 # @app.route("/validate", methods=["POST"])
 def validateAgainstSchema():
