@@ -6,19 +6,48 @@ import sys
 import requests
 import zipfile
 from pathlib import Path
+import logging
 
-VERSION = "0.0.1"
-SCHEMA_FILE='../blender-pipeline/scripts/config_schema.yaml'
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+log = logging.getLogger(__doc__)
+
+
+VERSION = "0.1.1"
+SCHEMA_FILE='config_schema.yaml'
 schema = yamale.make_schema(SCHEMA_FILE)
 tempdir = 'tempdir/'
 
-app = Flask(__name__)
-app.config["DEBUG"] = True
-app.config["UPLOAD_FOLDER"] = "."
+class Validator:
+    def __init__(self):
+        self.default_name = 'baap-template'
+        self.release_zip = tempdir + self.default_name + ".zip"
+        self.release_dir = tempdir + self.default_name + "/"
+        
 
-@app.route("/", methods=["GET"])
-def home():
-    return "<h1>Hi there!!!</h1>"
+    def generate_project(self):
+        self.get_latest_release()
+    
+    def get_latest_release(self):
+        if not os.path.exists(tempdir) or not os.path.isdir(tempdir):
+            log.info(f'creating {tempdir}...')
+
+            os.mkdir(tempdir)
+
+        if not os.path.exists(self.release_zip) or not os.path.isfile(self.release_zip):
+            url = f"https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v{VERSION}.zip"
+
+            log.info(f'fetching latest {self.release_zip} from {url}...')
+            r = requests.get(url)
+            open(self.release_zip, 'wb+').write(r.content)
+        
+        if not os.path.exists(self.release_dir) or not os.path.isdir(self.release_dir):
+
+            log.info(f'extracting zip...')
+            with zipfile.ZipFile(self.release_zip, 'r') as zip_file:
+                zip_file.extractall(tempdir)
+                # blender_pipeline_dir = "blender-pipeline-" + VERSION + "/"
+
 
 
 def save_file_and_validate(uploaded_file, path):
@@ -83,7 +112,6 @@ def hello_world(request):
 
 
 
-@app.route("/generate", methods=["POST"])
 def generateRelease():
     r = requests.get("https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v0.0.1.zip")
     open('baap-template.zip', 'wb').write(r.content)
@@ -94,7 +122,6 @@ def generateRelease():
         blender_pipeline_dir = "blender-pipeline-" + VERSION + "/"
 
     if request.files:
-
         uploaded_config = request.files.getlist('payload')[0]
         configFile = uploaded_config.filename
         
@@ -127,7 +154,7 @@ def generateRelease():
 
     return send_file('baap-template.zip')
 
-@app.route("/validate", methods=["POST"])
+# @app.route("/validate", methods=["POST"])
 def validateAgainstSchema():
     data = {}
 
@@ -156,11 +183,12 @@ def validateAgainstSchema():
 
 
 if __name__ == "__main__":
-    app.run()
+    v = Validator()
+    v.generate_project()
 
 
 
-# # CONFIG_FILE='./config.yaml'
+# CONFIG_FILE='./config.yaml'
 
 
 # def init_config():
