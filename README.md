@@ -5,6 +5,7 @@ Flask Microservice that can generate BAAP workdirs from a predefined config.yaml
 ENV | URL
 --- | ---
 PROD | https://baap-workdir-generator-auahkugdnq-uw.a.run.app
+LOCAL | http://localhost:5000
 
 ## Quickstart
 
