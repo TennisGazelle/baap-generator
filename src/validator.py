@@ -46,7 +46,7 @@ class Validator:
             os.mkdir(tempdir)
 
         if not os.path.exists(self.release_zip) or not os.path.isfile(self.release_zip):
-            url = f"https://github.com/TennisGazelle/blender-pipeline/archive/refs/tags/v{VERSION}.zip"
+            url = f"https://api.github.com/repos/TennisGazelle/blender-pipeline/zipball/v{VERSION}"
 
             log.info(f'fetching latest {self.release_zip} from {url}...')
             r = requests.get(url)
