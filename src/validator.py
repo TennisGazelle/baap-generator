@@ -95,7 +95,6 @@ class Validator:
         self.get_latest_release()
 
         if request.files:
-            log.info(f'processing new request with files')
             uploaded_config_file = request.files.getlist('payload')[0]
             instance_hash = str(hash(uploaded_config_file))[:6]
             instance_config = self.get_dir(instance_hash) + 'config.yaml'
@@ -103,7 +102,7 @@ class Validator:
             instance_makefile = self.get_dir(instance_hash) + 'Makefile'
 
             try:
-                log.info(f'{instance_hash} being processed')
+                log.info(f'{instance_hash} processing')
                 os.mkdir(self.get_dir(instance_hash))
                 self.uploaded_yamale = self.save_file_and_validate(uploaded_config_file, instance_config)
                 self.stages = self.uploaded_yamale['stages']
@@ -119,12 +118,12 @@ class Validator:
             # generate new zip file
             self.copy_from_main(instance_hash)
             uploaded_config_file.save(instance_config)
-            log.info(f'generating makefile {instance_hash}...')
+            log.info(f'{instance_hash} generating makefile...')
             self.generate_makefile(instance_makefile)
-            log.info(f'zipping {instance_hash}...')
+            log.info(f'{instance_hash} zipping...')
             self.zip_project(instance_zip, instance_hash)
 
-            log.info(f'returning {instance_hash}...')
+            log.info(f'{instance_hash} returning...')
             return send_file('../' + instance_zip)
         else:
             return send_file('../' + self.release_zip)
@@ -141,8 +140,11 @@ class Validator:
             for dirname, _, files in os.walk(self.get_dir(hash)):
                 # zip_file.write(dirname)
                 for filename in files:
+                    if filename in zip_filename:
+                        continue
+                    log.info(f'{hash} zipping {os.path.join(dirname, filename)}')
                     zip_file.write(os.path.join(dirname, filename))
-                    print(f'writing {os.path.join(dirname, filename)}')
+
             zip_file.close()
 
     # should probably be static but would need a lot of params

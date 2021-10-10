@@ -11,4 +11,4 @@ test: response.zip
 	unzip -d tempdir -o response.zip
 
 clean:
-	rm -rf tempdir/
+	rm -rf tempdir/ response.zip
