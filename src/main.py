@@ -1,11 +1,17 @@
 from flask import Flask, request, send_file
 from validator import Validator
+import logging
+import json
+import os
 import sys
 sys.path[0] = sys.path[0][:-4] # TRYING TO GET US OUT OF SRC/
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
 app.config["UPLOAD_FOLDER"] = "."
+
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+log = logging.getLogger(__doc__)
 
 PORT=5000
 

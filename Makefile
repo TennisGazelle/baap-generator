@@ -9,3 +9,6 @@ local_run: src/main.py
 
 test: response.zip
 	unzip -d tempdir -o response.zip
+
+clean:
+	rm -rf tempdir/

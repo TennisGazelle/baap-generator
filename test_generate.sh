@@ -14,9 +14,17 @@ fi
 # put in the good config
 rm -rf response.zip
 echo "====> fetching with specified 'config.yaml'"
-curl -XPOST localhost:5000/generate -d ‘@$(pwd)/test/config.yaml’  -o response.zip
+curl -XPOST localhost:5000/generate --form 'payload=@"./test/config.yaml"'  -o response.zip
 echo "====> extracting 'config.yaml' from the downloaded file"
 unzip -d tempdir -o response.zip
-diff -y tempdir/TennisGazelle-*/config.yaml test/config.yaml
+# diff -y tempdir/TennisGazelle-*/config.yaml test/config.yaml
+
+# # put in the good config
+# rm -rf response.zip
+# echo "====> fetching with specified 'complex_config.yaml'"
+# curl -XPOST localhost:5000/generate -d ‘@$(pwd)/test/complex_config.yaml’  -o response.zip
+# echo "====> extracting 'config.yaml' from the downloaded file"
+# unzip -d tempdir -o response.zip
+# diff -y tempdir/TennisGazelle-*/config.yaml test/complex_config.yaml
 
 exit 0

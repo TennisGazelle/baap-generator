@@ -8,9 +8,10 @@ import requests
 import zipfile
 from pathlib import Path
 import logging
+import time
 
 
-logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
+logging.basicConfig(level=os.environ.get("LOGLEVEL", "DEBUG"))
 log = logging.getLogger(__doc__)
 
 
@@ -47,6 +48,8 @@ class Validator:
         all_recipe_names = []
 
         for stage in self.stages:
+            if stage[0] == '_':
+                continue
             recipe_name = stage + '_render'
             blend_file = self.stages[stage]['blend_file']
 
@@ -58,11 +61,13 @@ class Validator:
             set_paths_contents.add(f'\tdocker run --rm -v ${{PWD}}/blender/:/blender/ -v ${{PWD}}/scripts:/scripts -v ${{PWD}}/config.yaml:/config.yaml tennisgazelle/blender-pipeline:latest blender/{blend_file} --python scripts/set_path.py')
 
         for model in self.models:
+            if model[0] == '_':
+                continue
             recipe_name = model + '_model_render'
 
             all_recipe_names.append(recipe_name)
             render_contents.append(f'{recipe_name}: {self.models[model]["obj_file"]}')
-            render_contents.append(f'\tdocker run --rm -v ${{PWD}}/dump:/tmp -v ${{PWD}}/blender/:/blender/ -v ${{PWD}}/scripts:/scripts -v ${{PWD}}/config.yaml:/config.yaml -v ${{PWD}}/imgs/:/imgs tennisgazelle/blender-pipeline:latest --python scripts/obj-render.py -- --output_folder {this.models[model]["render_output"]} {this.models[model]["obj_file"]}')
+            render_contents.append(f'\tdocker run --rm -v ${{PWD}}/dump:/tmp -v ${{PWD}}/blender/:/blender/ -v ${{PWD}}/scripts:/scripts -v ${{PWD}}/config.yaml:/config.yaml -v ${{PWD}}/imgs/:/imgs tennisgazelle/blender-pipeline:latest --python scripts/obj-render.py -- --output_folder {self.models[model]["render_output"]} {self.models[model]["obj_file"]}')
             render_contents.append('')
 
 
@@ -83,25 +88,29 @@ class Validator:
 
     def save_file_and_validate(self, uploaded_file, destination_file):
         uploaded_file.save(destination_file)
-        uploaded_yamale = yamale.make_data(filename)
+        uploaded_yamale = yamale.make_data(destination_file)
         return uploaded_yamale[0][0]
 
     def generate_project(self):
         self.get_latest_release()
 
         if request.files:
+            log.info(f'processing new request with files')
             uploaded_config_file = request.files.getlist('payload')[0]
-            try:
-                instance_hash = hash(uploaded_config_file)[:6]
-                instance_config = self.get_dir(instance_hash) + 'config.yaml'
-                instance_zip = self.get_dir(instance_hash) + 'baap.zip'.format(instance_hash)
-                instance_makefile = self.get_dir(instance_hash) + 'Makefile'
+            instance_hash = str(hash(uploaded_config_file))[:6]
+            instance_config = self.get_dir(instance_hash) + 'config.yaml'
+            instance_zip = self.get_dir(instance_hash) + '{}-baap.zip'.format(instance_hash)
+            instance_makefile = self.get_dir(instance_hash) + 'Makefile'
 
+            try:
+                log.info(f'{instance_hash} being processed')
+                os.mkdir(self.get_dir(instance_hash))
                 self.uploaded_yamale = self.save_file_and_validate(uploaded_config_file, instance_config)
-                self.stages = uploaded_yamale['stages']
-                self.models = uploaded_yamale['models']
-                self.docker = uploaded_yamale['docker']
+                self.stages = self.uploaded_yamale['stages']
+                self.models = self.uploaded_yamale['models']
+                self.docker = self.uploaded_yamale['docker']
             except Exception as err:
+                log.warn(f'{instance_hash} failed, bad yaml')
                 return {
                     "error": "Bad yaml",
                     "msg": str(err)
@@ -110,24 +119,32 @@ class Validator:
             # generate new zip file
             self.copy_from_main(instance_hash)
             uploaded_config_file.save(instance_config)
+            log.info(f'generating makefile {instance_hash}...')
             self.generate_makefile(instance_makefile)
-            self.zip_project(instance_zip)
-            return send_file(instance_zip)
+            log.info(f'zipping {instance_hash}...')
+            self.zip_project(instance_zip, instance_hash)
+
+            log.info(f'returning {instance_hash}...')
+            return send_file('../' + instance_zip)
         else:
             return send_file('../' + self.release_zip)
     
     def copy_from_main(self, hash):
         destination = self.get_dir(hash)
+        if os.path.exists(destination):
+            shutil.rmtree(destination)
         shutil.copytree(self.release_dir, destination)
 
-    def zip_project(self, filename):
-        with zipfile.ZipFile(filename, 'w') as zip_file:
-            zip_file.write(self.release_dir)
-            for dirname, _, files in os.walk(self.release_instance_zip):
-                zip_file.write(dirname)
+    def zip_project(self, zip_filename, hash):
+        with zipfile.ZipFile(zip_filename, 'w') as zip_file:
+            zip_file.write(self.get_dir(hash))
+            for dirname, _, files in os.walk(self.get_dir(hash)):
+                # zip_file.write(dirname)
                 for filename in files:
                     zip_file.write(os.path.join(dirname, filename))
-    
+                    print(f'writing {os.path.join(dirname, filename)}')
+            zip_file.close()
+
     # should probably be static but would need a lot of params
     def get_latest_release(self):
         # ensuring tempdir exists
@@ -146,7 +163,10 @@ class Validator:
         if not os.path.exists(self.release_dir) or not os.path.isdir(self.release_dir):
             log.info(f'extracting zip...')
             with zipfile.ZipFile(self.release_zip, 'r') as zip_file:
+                top_level_dir = zip_file.infolist()[0].filename
                 zip_file.extractall(tempdir)
+                os.rename(tempdir + top_level_dir, self.release_dir)
+
                 # blender_pipeline_dir = "blender-pipeline-" + VERSION + "/"
 
 
