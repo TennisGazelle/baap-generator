@@ -17,6 +17,8 @@ def home():
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    if request.files:
+        print('request.files')
     return v.generate_project()
 
 if __name__ == "__main__":
