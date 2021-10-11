@@ -29,7 +29,7 @@ class Validator:
         self.release_config = tempdir + self.default_name + "/config.yaml"
 
     def get_dir(self, hash):
-        return tempdir + "{}/".format(hash) 
+        return tempdir + "{}-baap/".format(hash)
         
 
     def generate_makefile(self, filename):
@@ -96,14 +96,17 @@ class Validator:
 
         if request.files:
             uploaded_config_file = request.files.getlist('payload')[0]
-            instance_hash = str(hash(uploaded_config_file))[:6]
+            instance_hash = str(hash(uploaded_config_file))[1:7] # first 6 digits, ignore potential minus
             instance_config = self.get_dir(instance_hash) + 'config.yaml'
-            instance_zip = self.get_dir(instance_hash) + '{}-baap.zip'.format(instance_hash)
+            instance_zip = self.get_dir(instance_hash) + '{}.zip'.format(instance_hash)
             instance_makefile = self.get_dir(instance_hash) + 'Makefile'
 
             try:
                 log.info(f'{instance_hash} processing')
+                if os.path.exists(self.get_dir(instance_hash)):
+                    os.clean(self.get_dir(instance_hash))
                 os.mkdir(self.get_dir(instance_hash))
+
                 self.uploaded_yamale = self.save_file_and_validate(uploaded_config_file, instance_config)
                 self.stages = self.uploaded_yamale['stages']
                 self.models = self.uploaded_yamale['models']
@@ -142,7 +145,7 @@ class Validator:
                 for filename in files:
                     if filename in zip_filename:
                         continue
-                    log.info(f'{hash} zipping {os.path.join(dirname, filename)}')
+                    log.info(f'{hash} zipping {os.path.join(dirname, filename).replace("tempdir/", "")}')
                     zip_file.write(os.path.join(dirname, filename))
 
             zip_file.close()
