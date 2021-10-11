@@ -35,5 +35,5 @@ Test:
 
 Test (with file):
     
-    curl -XPOST localhost:5000/generate -d ‘@$(pwd)/test/config.yaml’  -o response.zip
-    curl -XPOST localhost:5000/generate -d ‘@$(pwd)/test/badconfig.yaml’  -o response.zip
+    curl -XPOST localhost:5000/generate --form 'payload=@"./test/config.yaml"' -o response.zip
+    curl -XPOST localhost:5000/generate --form 'payload=@"./test/badconfig.yaml"' -o response.zip

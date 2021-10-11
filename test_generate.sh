@@ -1,20 +1,29 @@
 #!/bin/bash
 
-# Is Server running?
+IS_LOCAL=0
 
-echo "====> Validating that 'main.py' is running"
-if [[ $(ps -ef | grep src/main | grep -v grep) ]]; then
-# if [[ $(ls -A) ]]; then
-    echo "====> it is running!"
+if [[ $IS_LOCAL -eq 1 ]]; then
+    # Is Server running?
+    echo "====> Validating that 'main.py' is running"
+    if [[ $(ps -ef | grep src/main | grep -v grep) ]]; then
+    # if [[ $(ls -A) ]]; then
+        echo "====> it is running!"
+    else
+        echo "====> please run 'python3 validator.py' in a background shell!"
+        exit 1
+    fi
+
+    URL=localhost:5000
 else
-    echo "====> please run 'python3 validator.py' in a background shell!"
-    exit 1
+    URL=https://baap-workdir-generator-auahkugdnq-uw.a.run.app
 fi
+
+echo $URL
 
 # put in the good config
 rm -rf response.zip
 echo "====> fetching with specified 'config.yaml'"
-curl -XPOST localhost:5000/generate --form 'payload=@"./test/config.yaml"'  -o response.zip
+curl -XPOST $URL/generate --form 'payload=@"./test/config.yaml"'  -o response.zip
 echo "====> extracting 'config.yaml' from the downloaded file"
 unzip -d tempdir -o response.zip
 # diff -y tempdir/tempdir/*-baap/config.yaml test/config.yaml
